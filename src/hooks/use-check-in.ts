@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import { calculatePointsForCheckIn } from '@/lib/utils';
 import { Event, UserProfile } from '@/types';
+import { users, addCheckIn, hasUserCheckedIn } from '@/data/mockData';
 
 interface CheckInResult {
   success: boolean;
@@ -10,24 +11,11 @@ interface CheckInResult {
   pointsEarned?: number;
 }
 
-// Mock storage for user profile - in a real app, this would come from a database
-const mockUserProfile: UserProfile = {
-  id: 'user1',
-  name: 'Jane Student',
-  email: 'jane@university.edu',
-  major: 'Computer Science',
-  points: 50,
-  attendedEvents: [],
-  badges: ['newcomer'],
-  shareProfile: true,
-  preferredCategories: ['academic', 'workshop']
-};
-
-// Mock storage for checked-in events
-const checkedInEvents: Record<string, boolean> = {};
+// Get current user's profile (In a real app, this would come from authentication)
+const currentUser = users[0]; // Default to the first user
 
 export function useCheckIn() {
-  const [userProfile, setUserProfile] = useState<UserProfile>(mockUserProfile);
+  const [userProfile, setUserProfile] = useState<UserProfile>(currentUser);
   const [processing, setProcessing] = useState(false);
 
   const processCheckIn = async (qrValue: string, events: Event[]): Promise<CheckInResult> => {
@@ -46,9 +34,14 @@ export function useCheckIn() {
       if (!event) {
         return { success: false, message: 'Event not found' };
       }
+
+      // Check if event is approved
+      if (event.approved === false) {
+        return { success: false, message: 'This event has not been approved yet' };
+      }
       
       // Check if already checked in
-      if (checkedInEvents[eventId]) {
+      if (hasUserCheckedIn(userProfile.id, eventId)) {
         return { success: false, message: 'You have already checked in to this event' };
       }
       
@@ -58,15 +51,15 @@ export function useCheckIn() {
       // Award points based on event category
       const pointsEarned = calculatePointsForCheckIn(event.category);
       
-      // Update mock user profile
+      // Record check-in
+      addCheckIn(userProfile.id, eventId, pointsEarned);
+      
+      // Update local user profile state
       setUserProfile(prev => ({
         ...prev,
         points: prev.points + pointsEarned,
         attendedEvents: [...prev.attendedEvents, eventId]
       }));
-      
-      // Mark as checked in
-      checkedInEvents[eventId] = true;
       
       // Show success toast
       toast({
@@ -90,7 +83,6 @@ export function useCheckIn() {
   return {
     userProfile,
     processing,
-    processCheckIn,
-    checkedInEvents
+    processCheckIn
   };
 }

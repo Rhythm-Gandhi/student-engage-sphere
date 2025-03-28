@@ -1,4 +1,3 @@
-
 export interface Event {
   id: string;
   title: string;
@@ -7,18 +6,11 @@ export interface Event {
   time: string;
   location: string;
   organizer: string;
-  category: "workshop" | "social" | "academic" | "sports" | "career";
+  category: string;
   image: string;
   attendees: number;
-  isRegistered?: boolean;
-  mapPosition?: [number, number, number]; // [x, y, z] coordinates for 3D map
-  qrCode?: string; // Added for QR code check-in
-  checkedInUsers?: Array<{
-    id: string;
-    name: string;
-    major?: string;
-    shareProfile: boolean;
-  }>; // Users who have checked in to this event
+  mapPosition: [number, number, number];
+  approved?: boolean;
 }
 
 export interface EventFilter {
@@ -27,16 +19,14 @@ export interface EventFilter {
   query?: string;
 }
 
-export type ThemeMode = "light" | "dark" | "system";
-
 export interface UserProfile {
   id: string;
   name: string;
-  email?: string;
+  email: string;
   major?: string;
   points: number;
-  attendedEvents: string[]; // IDs of events attended
-  badges: string[]; // Badges earned
-  shareProfile: boolean; // Whether to share profile in networking
-  preferredCategories?: string[]; // Categories user prefers
+  attendedEvents: string[];
+  badges: string[];
+  shareProfile: boolean;
+  preferredCategories: string[];
 }
