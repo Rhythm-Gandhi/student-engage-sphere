@@ -1,10 +1,14 @@
 
 import { Link } from "react-router-dom";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEvents } from "@/hooks/use-events";
 import { useState } from "react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useCheckIn } from "@/hooks/use-check-in";
+import { useRecommendations } from "@/hooks/use-recommendations";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Group events by date
 const groupEventsByDate = (events: any[]) => {
@@ -30,6 +34,7 @@ const getFirstDayOfMonth = (year: number, month: number) => {
 const Calendar = () => {
   const { events } = useEvents();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const { userProfile } = useCheckIn();
   
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -85,9 +90,76 @@ const Calendar = () => {
     setCurrentDate(new Date());
   };
 
+  // Get attended events for recommendations
+  const attendedEvents = events.filter(event => 
+    userProfile.attendedEvents.includes(event.id)
+  );
+  
+  // Get events the user is registered for
+  const registeredEvents = events.filter(event => event.isRegistered);
+  
+  // Get event recommendations
+  const { recommendations, recommendationReason } = useRecommendations(
+    events, 
+    userProfile,
+    registeredEvents
+  );
+
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold tracking-tight mb-6">Events Calendar</h1>
+      
+      {/* Event Recommendations */}
+      <div className="mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recommended for You</CardTitle>
+            <CardDescription>{recommendationReason}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {recommendations.length > 0 ? (
+                recommendations.map(event => (
+                  <Link 
+                    key={event.id} 
+                    to={`/event/${event.id}`}
+                    className="block hover:no-underline"
+                  >
+                    <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="h-32 overflow-hidden">
+                        <img 
+                          src={event.image} 
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <Badge 
+                          style={{ backgroundColor: `var(--category-${event.category})` }}
+                          className="text-white mb-2"
+                        >
+                          {event.category}
+                        </Badge>
+                        <h3 className="font-medium text-foreground">{event.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {new Date(event.date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="col-span-3 py-8 text-center">
+                  <p className="text-muted-foreground">No recommendations available at this time.</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       
       <div className="bg-card rounded-xl border overflow-hidden">
         <div className="p-4 flex items-center justify-between border-b">
@@ -149,10 +221,13 @@ const Calendar = () => {
                       >
                         <Badge 
                           variant="outline" 
-                          className="w-full justify-start text-left font-normal py-0.5"
+                          className="w-full justify-start text-left font-normal py-0.5 flex items-center gap-1"
                           style={{ borderColor: `var(--category-${event.category})` }}
                         >
-                          {event.title}
+                          {userProfile.attendedEvents.includes(event.id) && (
+                            <CheckCircle className="h-2.5 w-2.5 text-green-500 flex-shrink-0" />
+                          )}
+                          <span className="truncate">{event.title}</span>
                         </Badge>
                       </Link>
                     ))}
@@ -168,6 +243,16 @@ const Calendar = () => {
           ))}
         </div>
       </div>
+      
+      {/* PWA installation prompt */}
+      <Alert className="mt-8">
+        <CheckCircle className="h-4 w-4" />
+        <AlertTitle>Install as App</AlertTitle>
+        <AlertDescription>
+          This site can be installed as an app on your device for offline access to event information.
+          Look for the "Add to Home Screen" option in your browser menu.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Calendar, ChevronLeft, MapPin, Share2, Users } from "lucide-react";
+import { Calendar, ChevronLeft, MapPin, Share2, Users, QrCode, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,11 +9,19 @@ import { useEvent, useAttendEvent } from "@/hooks/use-events";
 import { formatDate, generateEventShareLink } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
 import { CampusMap } from "@/components/CampusMap";
+import { QRCodeDisplay } from "@/components/QRCodeDisplay";
+import { QRCodeScanner } from "@/components/QRCodeScanner";
+import { NetworkingList } from "@/components/NetworkingList";
+import { useCheckIn } from "@/hooks/use-check-in";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { event, loading, error } = useEvent(id);
   const { isAttending, toggleAttend, isUpdating } = useAttendEvent();
+  const { processCheckIn, processing, userProfile } = useCheckIn();
+  const [checkInSuccess, setCheckInSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("details");
   
   const attending = id ? isAttending(id) : false;
 
@@ -67,6 +75,34 @@ const EventDetail = () => {
     });
   };
 
+  const handleQRScan = async (data: string) => {
+    if (!event) return;
+    
+    try {
+      const result = await processCheckIn(data, [event]);
+      if (result.success) {
+        setCheckInSuccess(true);
+        toast({
+          title: "Check-in Successful!",
+          description: `You've earned ${result.pointsEarned} points for attending this event.`,
+        });
+      } else {
+        toast({
+          title: "Check-in Failed",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("QR scan error:", error);
+      toast({
+        title: "Check-in Error",
+        description: "Failed to process check-in. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     // Scroll to top when component mounts
     window.scrollTo(0, 0);
@@ -85,6 +121,14 @@ const EventDetail = () => {
       </div>
     );
   }
+
+  // Sample checked-in users for demonstration
+  const checkedInUsers = [
+    { id: '1', name: 'Alex Johnson', major: 'Computer Science', shareProfile: true },
+    { id: '2', name: 'Jamie Smith', major: 'Business', shareProfile: true },
+    { id: '3', name: 'Taylor Wong', major: 'Psychology', shareProfile: true },
+    { id: '4', name: 'Anonymous User', shareProfile: false },
+  ];
 
   return (
     <div className="container py-8">
@@ -140,70 +184,151 @@ const EventDetail = () => {
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2">
-              <h2 className="text-xl font-semibold mb-4">About this event</h2>
-              <p className="text-muted-foreground whitespace-pre-line">
-                {event.description}
-              </p>
-              
-              <div className="mt-8 space-y-4">
-                <div className="flex items-center">
-                  <Calendar className="mr-3 h-5 w-5 text-primary" />
-                  <div>
-                    <h3 className="font-medium">Date and Time</h3>
-                    <p className="text-muted-foreground">
-                      {formatDate(event.date)} • {event.time}
-                    </p>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+            <TabsList className="grid grid-cols-3 w-full md:w-auto">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="check-in">Check-in</TabsTrigger>
+              <TabsTrigger value="networking">Networking</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="md:col-span-2">
+                  <h2 className="text-xl font-semibold mb-4">About this event</h2>
+                  <p className="text-muted-foreground whitespace-pre-line">
+                    {event.description}
+                  </p>
+                  
+                  <div className="mt-8 space-y-4">
+                    <div className="flex items-center">
+                      <Calendar className="mr-3 h-5 w-5 text-primary" />
+                      <div>
+                        <h3 className="font-medium">Date and Time</h3>
+                        <p className="text-muted-foreground">
+                          {formatDate(event.date)} • {event.time}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <MapPin className="mr-3 h-5 w-5 text-primary" />
+                      <div>
+                        <h3 className="font-medium">Location</h3>
+                        <p className="text-muted-foreground">{event.location}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Users className="mr-3 h-5 w-5 text-primary" />
+                      <div>
+                        <h3 className="font-medium">Attendees</h3>
+                        <p className="text-muted-foreground">
+                          {event.attendees + (attending ? 1 : 0)} people attending
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center">
-                  <MapPin className="mr-3 h-5 w-5 text-primary" />
-                  <div>
-                    <h3 className="font-medium">Location</h3>
-                    <p className="text-muted-foreground">{event.location}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center">
-                  <Users className="mr-3 h-5 w-5 text-primary" />
-                  <div>
-                    <h3 className="font-medium">Attendees</h3>
-                    <p className="text-muted-foreground">
-                      {event.attendees + (attending ? 1 : 0)} people attending
-                    </p>
+                <div className="space-y-6">
+                  <CampusMap activeEventId={event.id} />
+                  
+                  <div className="bg-card rounded-xl border p-6 space-y-4">
+                    <h3 className="font-semibold">Actions</h3>
+                    
+                    <Button 
+                      onClick={handleAttend}
+                      disabled={isUpdating}
+                      className="w-full"
+                      variant={attending ? "default" : "outline"}
+                    >
+                      {attending ? "Cancel Attendance" : "Attend Event"}
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleShare}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share Event
+                    </Button>
                   </div>
                 </div>
               </div>
-            </div>
+            </TabsContent>
             
-            <div className="space-y-6">
-              <CampusMap activeEventId={event.id} />
-              
-              <div className="bg-card rounded-xl border p-6 space-y-4">
-                <h3 className="font-semibold">Actions</h3>
-                
-                <Button 
-                  onClick={handleAttend}
-                  disabled={isUpdating}
-                  className="w-full"
-                  variant={attending ? "default" : "outline"}
-                >
-                  {attending ? "Cancel Attendance" : "Attend Event"}
-                </Button>
-                
-                <Button 
-                  onClick={handleShare}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Share Event
-                </Button>
+            <TabsContent value="check-in" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  {checkInSuccess ? (
+                    <div className="bg-card border rounded-xl p-6 text-center">
+                      <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">Check-in Successful!</h3>
+                      <p className="text-muted-foreground mb-4">
+                        You've earned points for attending this event.
+                      </p>
+                      <div className="bg-muted p-4 rounded-lg mb-4">
+                        <p className="font-medium">Current Points: {userProfile.points}</p>
+                      </div>
+                      <Button 
+                        onClick={() => setActiveTab("networking")} 
+                        className="w-full"
+                      >
+                        View Who's Here
+                      </Button>
+                    </div>
+                  ) : (
+                    <QRCodeScanner onScan={handleQRScan} />
+                  )}
+                </div>
+                <div>
+                  <QRCodeDisplay eventId={event.id} />
+                  <div className="mt-6 bg-card border rounded-xl p-6">
+                    <h3 className="font-semibold mb-2">Event Check-in</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Scan the QR code at the event to check in and unlock networking
+                      with other attendees. You'll also earn points toward badges and rewards.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+            
+            <TabsContent value="networking" className="mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="md:col-span-2">
+                  <NetworkingList 
+                    users={checkedInUsers} 
+                    eventTitle={event.title} 
+                  />
+                </div>
+                <div>
+                  <div className="bg-card border rounded-xl p-6 space-y-4">
+                    <h3 className="font-semibold">Your Profile</h3>
+                    <div className="space-y-2">
+                      <p className="text-sm">
+                        <span className="font-medium">Name:</span> {userProfile.name}
+                      </p>
+                      {userProfile.major && (
+                        <p className="text-sm">
+                          <span className="font-medium">Major:</span> {userProfile.major}
+                        </p>
+                      )}
+                      <p className="text-sm">
+                        <span className="font-medium">Share Profile:</span> {userProfile.shareProfile ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+                    <Button variant="outline" className="w-full" disabled>
+                      Edit Profile Settings
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Profile visibility controls are available in your account settings.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </div>

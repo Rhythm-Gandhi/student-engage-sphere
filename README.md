@@ -1,69 +1,87 @@
-# Welcome to your Lovable project
+
+# Campus Events Portal
+
+An interactive platform for students to discover, track, and engage with campus events. Built with React, TypeScript, and Tailwind CSS.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/8b192bdc-6e13-452c-9db7-c2048c76e310
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+### Core Features
+- **Interactive Event Calendar**: View events in daily, weekly, and monthly formats
+- **Event Details**: Get comprehensive information about each event
+- **Campus Map**: Interactive 3D map showing event locations
+- **Responsive Design**: Works on all devices
 
-**Use Lovable**
+### New Features
+- **QR Code Check-in System**: Scan QR codes at events to check in and earn points
+- **Progressive Web App (PWA)**: Install the app on your device for offline access
+- **Smart Event Recommendations**: Get personalized event suggestions based on your preferences and schedule
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/8b192bdc-6e13-452c-9db7-c2048c76e310) and start prompting.
+## How to Use New Features
 
-Changes made via Lovable will be committed automatically to this repo.
+### QR Code Check-in
+1. Navigate to an event's detail page
+2. Click on the "Check-in" tab
+3. Use the QR code scanner to scan the event's QR code
+4. After successful check-in, you'll earn points and can see who else is attending in the "Networking" tab
 
-**Use your preferred IDE**
+### PWA Installation
+- On Chrome/Edge: Look for the install icon in the address bar
+- On iOS Safari: Tap the share button and select "Add to Home Screen"
+- On Android Chrome: Tap the menu button and select "Add to Home Screen"
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Smart Recommendations
+- View personalized event recommendations at the top of the Calendar page
+- Recommendations are based on your past attendance patterns and schedule
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Testing Locally
 
-Follow these steps:
-
+1. Clone the repository:
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. Install dependencies:
+```sh
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. Start the development server:
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Deploy to Vercel with:
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+vercel --prod
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
+## Technologies Used
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- react-qr-code
+- react-qr-reader
 
-## How can I deploy this project?
+## How to Contribute
 
-Simply open [Lovable](https://lovable.dev/projects/8b192bdc-6e13-452c-9db7-c2048c76e310) and click on Share -> Publish.
+1. Fork the repository
+2. Create a feature branch: `git checkout -b my-new-feature`
+3. Commit your changes: `git commit -m 'Add some feature'`
+4. Push to the branch: `git push origin my-new-feature`
+5. Submit a pull request
 
-## I want to use a custom domain - is that possible?
+## License
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+MIT
