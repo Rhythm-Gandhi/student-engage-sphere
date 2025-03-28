@@ -4,6 +4,7 @@ import { QrReader } from 'react-qr-reader';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { SwitchCamera } from 'lucide-react';
 
 interface QRCodeScannerProps {
   onScan: (data: string) => Promise<void>;
@@ -12,6 +13,7 @@ interface QRCodeScannerProps {
 export function QRCodeScanner({ onScan }: QRCodeScannerProps) {
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   
   const handleScan = async (result: any) => {
     if (result) {
@@ -41,6 +43,10 @@ export function QRCodeScanner({ onScan }: QRCodeScannerProps) {
     });
   };
 
+  const toggleFacingMode = () => {
+    setFacingMode(facingMode === 'environment' ? 'user' : 'environment');
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -48,14 +54,24 @@ export function QRCodeScanner({ onScan }: QRCodeScannerProps) {
       </CardHeader>
       <CardContent>
         {scanning ? (
-          <div className="aspect-square max-w-md mx-auto overflow-hidden rounded-lg">
-            <QrReader
-              scanDelay={300}
-              onResult={handleScan}
-              constraints={{ facingMode: 'environment' }}
-              containerStyle={{ width: '100%' }}
-              videoStyle={{ width: '100%' }}
-            />
+          <div className="space-y-4">
+            <div className="aspect-square max-w-md mx-auto overflow-hidden rounded-lg">
+              <QrReader
+                scanDelay={300}
+                onResult={handleScan}
+                constraints={{ facingMode }}
+                containerStyle={{ width: '100%' }}
+                videoStyle={{ width: '100%' }}
+              />
+            </div>
+            <Button
+              onClick={toggleFacingMode}
+              variant="outline"
+              className="mx-auto flex items-center"
+            >
+              <SwitchCamera className="mr-2 h-4 w-4" />
+              Switch Camera
+            </Button>
           </div>
         ) : (
           <div className="text-center p-6">
